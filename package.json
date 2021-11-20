@@ -1,0 +1,26 @@
+{
+  "name": "ast-analyzer",
+  "version": "1.0.0",
+  "description": "An analyzing tool for abstract syntax trees of less, scss and stylus files.",
+  "main": "analyze.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/puerschel93/AST-Analyzer.git"
+  },
+  "keywords": [
+    "scss",
+    "stylus",
+    "less",
+    "syntax",
+    "ast"
+  ],
+  "author": "Florian Pürschel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/puerschel93/AST-Analyzer/issues"
+  },
+  "homepage": "https://github.com/puerschel93/AST-Analyzer#readme"
+}
