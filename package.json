@@ -1,6 +1,7 @@
 {
   "name": "ast-analyzer",
   "version": "1.0.0",
+  "type": "module",
   "description": "An analyzing tool for abstract syntax trees of less, scss and stylus files.",
   "main": "analyze.js",
   "scripts": {
@@ -22,5 +23,13 @@
   "bugs": {
     "url": "https://github.com/puerschel93/AST-Analyzer/issues"
   },
-  "homepage": "https://github.com/puerschel93/AST-Analyzer#readme"
+  "homepage": "https://github.com/puerschel93/AST-Analyzer#readme",
+  "dependencies": {
+    "gonzales-pe": "^4.3.0",
+    "lodash": "^4.17.21",
+    "query-ast": "^1.0.4",
+    "sast": "^0.8.1",
+    "scss-parser": "^1.0.5",
+    "stylus": "^0.55.0"
+  }
 }
