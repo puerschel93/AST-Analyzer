@@ -1,9 +1,8 @@
 import gonzales from 'gonzales-pe';
-import parser from 'scss-parser';
 import stylus from 'stylus';
 
 class Parser {
-	async parseByType(type, file) {
+	static async parseByType(type, file) {
 		switch (type) {
 			case 'scss':
 				return await this.parseSCSS(file);
@@ -14,31 +13,38 @@ class Parser {
 		}
 	}
 
-	async parseSCSS(file) {
+	static async parseSCSS(file) {
 		try {
 			return await gonzales.parse(file, { syntax: 'scss' });
 		} catch (e) {
-			return null;
+			return Parser.clearError(e, Parser.parseSCSS);
 		}
 	}
 
-	async parseLESS(file) {
+	static async parseLESS(file) {
 		try {
 			return await gonzales.parse(file, { syntax: 'less' });
 		} catch (e) {
-			return null;
+			return Parser.clearError(e, Parser.parseLESS);
 		}
 	}
 
-	async parseSTYL(file) {
+	static async parseSTYL(file) {
 		try {
 			const Parser = stylus.Parser;
 			const parser = new Parser(file);
 			const ast = await parser.parse();
 			return ast;
 		} catch (e) {
-			return null;
+			return e;
 		}
+	}
+
+	static async clearError(file, handle) {
+		const { line } = file;
+		if (!file.css_) return '';
+		const code = file.css_.split('\n');
+		return await handle(code.splice(line + 1, 1).join('\n'));
 	}
 }
 
