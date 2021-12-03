@@ -1,80 +1,105 @@
-import Reader from './reader.js';
-import Parser from './parser.js';
+/**
+ * Created: 2021-11-21
+ * Author: Florian Pürschel
+ */
 import createQueryWrapper from 'query-ast';
+import { LESS_OPTIONS, SCSS_OPTIONS } from './ast-options.js';
+import Parser from './parser.js';
 import Protocol from './protocol.js';
+import Reader from './reader.js';
+import Logger from './utils/logger.js';
 
+/**
+ * This class is used to analyze the AST of a given file.
+ * It is used by the analyzer-worker to analyze the AST of a given file.
+ */
 class Analyzer {
-	types = ['scss', 'less'];
-	parser = new Parser();
+	types = ['scss', 'less', 'styl'];
 	scssProtocol = new Protocol();
-	numberOfFiles = 0;
-	scssVariables = 0;
+	numSCSS = 0;
+	numLESS = 0;
 
 	async analyze() {
-		for (const type of ['less']) {
+		for (const type of this.types) {
 			const reader = new Reader(type);
 			const files = reader.readFilesFromDirectory();
-			let count = 0;
+
 			for (const file of files) {
-				if (file === 'testfile.scss') continue;
+				if (file.toLowerCase() === '.ds_store') continue;
+				if (file.includes('testfile')) continue;
+
 				const content = reader.readFile(file);
-				const ast = await this.parser.parseByType(type, content);
-				if (ast) {
-					const res = this.analyzeSyntaxTree(ast, type, file);
-					count += res;
-				}
+				const ast = await Parser.parseByType(type, content);
+				!Object.keys(ast).includes('css_')
+					? this.analyzeSyntaxTree(ast, type, file)
+					: Logger.error(`Could not parse ${file}`);
 			}
-			console.log(count);
 		}
 	}
 
+	/**
+	 * This function passes the AST and the filename to the analyzing function
+	 * depending on the preprocessor.
+	 * @param {*} ast - Abstract Syntax Tree
+	 * @param {*} type - Type of file
+	 * @param {*} file - Name of file
+	 * @returns
+	 */
 	analyzeSyntaxTree(ast, type, file) {
 		switch (type) {
 			case 'styl':
-				this.analyzeStylus(ast);
-				break;
+				return this.analyzeStylus(ast, file);
 			case 'less':
-				return this.analyzeSCSS(ast, file);
-				break;
+				return this.analyzeLess(ast, file);
 			case 'scss':
-				return this.analyzeSCSS(ast, file);
-				break;
+				return this.analyzeScss(ast, file);
 		}
 	}
 
-	analyzeStylus(ast) {
-		//console.log(ast);
+	/**
+	 * Analyzes the AST of the Stylus Preprocessor
+	 * @param {*} ast - Abstract Syntax Tree
+	 * @param {*} file - Name of file
+	 */
+	analyzeStylus(ast, file) {
+		Logger.info(`Analyzing ${file}`);
+
+		// TODO: implement AST parser for Stylus
 	}
 
-	analyzeLess(ast) {
+	/**
+	 * Analyzes the AST of the LESS Preprocessor
+	 * @param {*} ast - Abstract Syntax Tree
+	 * @param {*} file - Name of file
+	 */
+	analyzeLess(ast, file) {
+		this.numLESS++;
+		Logger.info(`Analyzing ${file}`);
+
 		const obj = Object.assign({}, ast);
-		let $ = createQueryWrapper(obj, this.options);
-		console.log($('variable').length());
+		let $ = createQueryWrapper(obj, LESS_OPTIONS);
+
+		$('variable').length();
+
+		return;
 	}
 
-	options = {
-		hasChildren: (node) => Array.isArray(node.content),
-		getChildren: (node) => node.content,
-		getType: (node) => node.type,
-		toJSON: (node, children) => {
-			return Object.assign({}, node, {
-				value: children ? children : node.value,
-			});
-		},
-		toString: (node) => {
-			return typeof node.value === 'string' ? node.value : '';
-		},
-	};
+	/**
+	 * Analyzes the AST of the SCSS Preprocessor
+	 * @param {*} ast - Abstract Syntax Tree
+	 * @param {*} file - Name of file
+	 */
+	analyzeScss(ast, file) {
+		this.numSCSS++;
+		Logger.info(`Analyzing ${file}`);
 
-	analyzeSCSS(ast, file) {
 		const obj = Object.assign({}, ast);
-		let $ = createQueryWrapper(obj, this.options);
-		if ($('variable').nodes.map((node) => node.node.type).length > 0) {
-			return $('variable').length();
-		}
-		return 0;
+		let $ = createQueryWrapper(obj, SCSS_OPTIONS);
+
+		$('variable').length();
+
+		return;
 	}
-	//console.log($('variable').children().length() === 0);
 }
 
 export default Analyzer;
