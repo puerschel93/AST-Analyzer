@@ -6,7 +6,7 @@ class Reader {
 
 	constructor(type) {
 		this.type = type;
-		this.path = `./input/${type}`;
+		this.path = `./src/input/${type}`;
 	}
 
 	readFilesFromDirectory() {
