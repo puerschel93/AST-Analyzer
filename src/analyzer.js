@@ -5,7 +5,6 @@
 import createQueryWrapper from 'query-ast';
 import { LESS_OPTIONS, SCSS_OPTIONS } from './ast-options.js';
 import Parser from './parser.js';
-import Protocol from './protocol.js';
 import Reader from './reader.js';
 import Logger from './utils/logger.js';
 
@@ -14,8 +13,8 @@ import Logger from './utils/logger.js';
  * It is used by the analyzer-worker to analyze the AST of a given file.
  */
 class Analyzer {
-	types = ['scss', 'less', 'styl'];
-	scssProtocol = new Protocol();
+	//types = ['scss', 'less', 'styl'];
+	types = ['styl'];
 	numSCSS = 0;
 	numLESS = 0;
 
@@ -26,7 +25,7 @@ class Analyzer {
 
 			for (const file of files) {
 				if (file.toLowerCase() === '.ds_store') continue;
-				if (file.includes('testfile')) continue;
+				if (!file.includes('testfile')) continue;
 
 				const content = reader.readFile(file);
 				const ast = await Parser.parseByType(type, content);
@@ -63,8 +62,19 @@ class Analyzer {
 	 */
 	analyzeStylus(ast, file) {
 		Logger.info(`Analyzing ${file}`);
+		if (!ast.nodes) return;
+		for (const node of ast.nodes) {
+			if (node.nodes) this.analyzeNodes(node.nodes);
+		}
+		//if (ast.nodes) this.analyzeNodes(ast.nodes);
+	}
 
-		// TODO: implement AST parser for Stylus
+	analyzeNodes(nodes) {
+		for (const node of nodes) {
+			console.log(node.constructor.name);
+			if (node.nodes) return this.analyzeNodes(node.nodes);
+			else return console.log(node);
+		}
 	}
 
 	/**
