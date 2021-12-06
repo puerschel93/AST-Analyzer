@@ -14,9 +14,10 @@ import Logger from './utils/logger.js';
  */
 class Analyzer {
 	//types = ['scss', 'less', 'styl'];
-	types = ['styl'];
+	types = ['less'];
 	numSCSS = 0;
 	numLESS = 0;
+	numMixins = 0;
 
 	async analyze() {
 		for (const type of this.types) {
@@ -25,7 +26,7 @@ class Analyzer {
 
 			for (const file of files) {
 				if (file.toLowerCase() === '.ds_store') continue;
-				if (!file.includes('testfile')) continue;
+				if (file.includes('testfile')) continue;
 
 				const content = reader.readFile(file);
 				const ast = await Parser.parseByType(type, content);
@@ -34,6 +35,7 @@ class Analyzer {
 					: Logger.error(`Could not parse ${file}`);
 			}
 		}
+		console.log(this.numMixins);
 	}
 
 	/**
@@ -89,7 +91,7 @@ class Analyzer {
 		const obj = Object.assign({}, ast);
 		let $ = createQueryWrapper(obj, LESS_OPTIONS);
 
-		$('variable').length();
+		this.numMixins += $('mixin').length();
 
 		return;
 	}
@@ -102,11 +104,10 @@ class Analyzer {
 	analyzeScss(ast, file) {
 		this.numSCSS++;
 		Logger.info(`Analyzing ${file}`);
-
 		const obj = Object.assign({}, ast);
 		let $ = createQueryWrapper(obj, SCSS_OPTIONS);
 
-		$('variable').length();
+		this.numMixins += $('mixin').length();
 
 		return;
 	}
