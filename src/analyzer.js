@@ -14,10 +14,10 @@ import Logger from './utils/logger.js';
  */
 class Analyzer {
 	//types = ['scss', 'less', 'styl'];
-	types = ['less'];
+	types = ['scss', 'less'];
 	numSCSS = 0;
 	numLESS = 0;
-	numMixins = 0;
+	histogram = {};
 
 	async analyze() {
 		for (const type of this.types) {
@@ -31,11 +31,11 @@ class Analyzer {
 				const content = reader.readFile(file);
 				const ast = await Parser.parseByType(type, content);
 				!Object.keys(ast).includes('css_')
-					? this.analyzeSyntaxTree(ast, type, file)
+					? this.analyzeSyntaxTree(ast, type, file, content)
 					: Logger.error(`Could not parse ${file}`);
 			}
 		}
-		console.log(this.numMixins);
+		console.log(this.histogram);
 	}
 
 	/**
@@ -46,14 +46,14 @@ class Analyzer {
 	 * @param {*} file - Name of file
 	 * @returns
 	 */
-	analyzeSyntaxTree(ast, type, file) {
+	analyzeSyntaxTree(ast, type, file, code) {
 		switch (type) {
 			case 'styl':
-				return this.analyzeStylus(ast, file);
+				return this.analyzeStylus(ast, file, code);
 			case 'less':
-				return this.analyzeLess(ast, file);
+				return this.analyzeScss(ast, file, code);
 			case 'scss':
-				return this.analyzeScss(ast, file);
+				return this.analyzeScss(ast, file, code);
 		}
 	}
 
@@ -101,15 +101,23 @@ class Analyzer {
 	 * @param {*} ast - Abstract Syntax Tree
 	 * @param {*} file - Name of file
 	 */
-	analyzeScss(ast, file) {
+	analyzeScss(ast, file, code) {
 		this.numSCSS++;
 		Logger.info(`Analyzing ${file}`);
+		const length = code.split('\n').length;
+		let nestings = 0;
 		const obj = Object.assign({}, ast);
+		if (!obj.syntax) return;
 		let $ = createQueryWrapper(obj, SCSS_OPTIONS);
+		const rulesets = $('ruleset').length();
+		for (const node of $('ruleset').nodes) {
+			const json = JSON.parse(JSON.stringify(node));
+			delete json.type;
+			if (JSON.stringify(json).includes('ruleset')) nestings++;
+		}
 
-		this.numMixins += $('mixin').length();
-
-		return;
+		const avgNestings = (nestings / length).toFixed(2);
+		this.histogram[avgNestings] = (this.histogram[avgNestings] ?? 0) + 1;
 	}
 }
 
