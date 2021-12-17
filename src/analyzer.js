@@ -14,7 +14,7 @@ import Logger from './utils/logger.js';
  */
 class Analyzer {
 	//types = ['scss', 'less', 'styl'];
-	types = ['scss', 'less'];
+	types = ['styl'];
 	numSCSS = 0;
 	numLESS = 0;
 	histogram = {};
@@ -26,7 +26,7 @@ class Analyzer {
 
 			for (const file of files) {
 				if (file.toLowerCase() === '.ds_store') continue;
-				if (file.includes('testfile')) continue;
+				if (!file.includes('testfile')) continue;
 
 				const content = reader.readFile(file);
 				const ast = await Parser.parseByType(type, content);
@@ -64,10 +64,14 @@ class Analyzer {
 	 */
 	analyzeStylus(ast, file) {
 		Logger.info(`Analyzing ${file}`);
+
 		if (!ast.nodes) return;
 		for (const node of ast.nodes) {
-			if (node.nodes) this.analyzeNodes(node.nodes);
+			console.log(node);
 		}
+		/*for (const node of ast.nodes) {
+			if (node.nodes) this.analyzeNodes(node.nodes);
+		}*/
 		//if (ast.nodes) this.analyzeNodes(ast.nodes);
 	}
 
