@@ -14,10 +14,16 @@ import Logger from './utils/logger.js';
  */
 class Analyzer {
 	//types = ['scss', 'less', 'styl'];
-	types = ['styl'];
+	types = ['scss'];
 	numSCSS = 0;
 	numLESS = 0;
 	histogram = {};
+	numberOfFiles = 0;
+	filesWithNesting = 0;
+	rulesets = 0;
+	nestedRulesets = 0;
+	numberOfLoops = 0;
+	numberOfConditionalFiles = 0;
 
 	async analyze() {
 		for (const type of this.types) {
@@ -35,6 +41,8 @@ class Analyzer {
 					: Logger.error(`Could not parse ${file}`);
 			}
 		}
+		Logger.info(`Number of files: ${this.numberOfFiles}`);
+		Logger.info(`Number of ConFiles: ${this.numberOfConditionalFiles}`);
 		console.log(this.histogram);
 	}
 
@@ -51,7 +59,7 @@ class Analyzer {
 			case 'styl':
 				return this.analyzeStylus(ast, file, code);
 			case 'less':
-				return this.analyzeScss(ast, file, code);
+				return this.analyzeLess(ast, file, code);
 			case 'scss':
 				return this.analyzeScss(ast, file, code);
 		}
@@ -69,10 +77,6 @@ class Analyzer {
 		for (const node of ast.nodes) {
 			console.log(node);
 		}
-		/*for (const node of ast.nodes) {
-			if (node.nodes) this.analyzeNodes(node.nodes);
-		}*/
-		//if (ast.nodes) this.analyzeNodes(ast.nodes);
 	}
 
 	analyzeNodes(nodes) {
@@ -90,14 +94,15 @@ class Analyzer {
 	 */
 	analyzeLess(ast, file) {
 		this.numLESS++;
-		Logger.info(`Analyzing ${file}`);
 
 		const obj = Object.assign({}, ast);
+		if (!obj.syntax) return;
 		let $ = createQueryWrapper(obj, LESS_OPTIONS);
 
-		this.numMixins += $('mixin').length();
+		console.log(obj.content[4].content[2]);
 
-		return;
+		this.numberOfFiles++;
+		if ($('function').length() > 0) console.log(file);
 	}
 
 	/**
@@ -107,21 +112,14 @@ class Analyzer {
 	 */
 	analyzeScss(ast, file, code) {
 		this.numSCSS++;
-		Logger.info(`Analyzing ${file}`);
-		const length = code.split('\n').length;
-		let nestings = 0;
+		//Logger.info(`Analyzing ${file}`);
 		const obj = Object.assign({}, ast);
 		if (!obj.syntax) return;
 		let $ = createQueryWrapper(obj, SCSS_OPTIONS);
-		const rulesets = $('ruleset').length();
-		for (const node of $('ruleset').nodes) {
-			const json = JSON.parse(JSON.stringify(node));
-			delete json.type;
-			if (JSON.stringify(json).includes('ruleset')) nestings++;
-		}
-
-		const avgNestings = (nestings / length).toFixed(2);
-		this.histogram[avgNestings] = (this.histogram[avgNestings] ?? 0) + 1;
+		//console.log(obj.content[2].content[2].content[1].content[3]);
+		this.numberOfFiles++;
+		if ($('function').length() > 0) console.log(file);
+		if ($('atrule').length() > 0) console.log(file);
 	}
 }
 
